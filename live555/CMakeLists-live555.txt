@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.21)
+project(live555)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+file(GLOB SRC_FILES
+    BasicUsageEnvironment/*.cpp
+    UsageEnvironment/*.cpp
+    groupsock/*.cpp
+    liveMedia/*.cpp
+    BasicUsageEnvironment/*.c
+    UsageEnvironment/*.c
+    groupsock/*.c
+    liveMedia/*.c
+)
+
+file(GLOB HEADER_FILES
+    BasicUsageEnvironment/include/*.hh
+    UsageEnvironment/include/*.hh
+    groupsock/include/*.hh
+    liveMedia/include/*.hh
+    BasicUsageEnvironment/include/*.h
+    UsageEnvironment/include/*.h
+    groupsock/include/*.h
+    liveMedia/include/*.h
+)
+
+add_library(live555 SHARED ${SRC_FILES} ${HEADER_FILES})
+
+target_include_directories(live555 PUBLIC
+    groupsock/include
+    UsageEnvironment/include
+    BasicUsageEnvironment/include
+    liveMedia/include
+)
+
+target_compile_definitions(live555 PRIVATE
+    $<$<PLATFORM_ID:Linux>:SOCKLEN_T=socklen_t;_LARGEFILE_SOURCE=1;_FILE_OFFSET_BITS=64;NO_OPENSSL=1>
+    $<$<PLATFORM_ID:Windows>:NO_OPENSSL=1;NO_GETIFADDRS>
+)
+
+set_target_properties(live555 PROPERTIES
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+)
+
+target_link_libraries(live555 PRIVATE
+    $<$<PLATFORM_ID:Windows>:ws2_32.lib>
+)
+
+install(TARGETS live555 CONFIGURATIONS Release)
+
+include(GNUInstallDirs)
+install(FILES ${HEADER_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/live555)
